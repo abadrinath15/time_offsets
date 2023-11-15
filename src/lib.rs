@@ -8,14 +8,12 @@ pub trait DateOffsetable {
     fn new(&self, day: u16, month: u16, year: u16) -> Self;
 }
 
-pub trait DateOffset {
-    fn offset_date(&self, day: u16, month: u16, year: u16) -> (u16, u16, u16);
-}
-
-fn add_offset<T: DateOffsetable>(dt: T, offset: impl DateOffset) -> T {
-    let (offset_day, offset_month, offset_year) =
-        offset.offset_date(dt.day(), dt.month(), dt.year());
-    dt.new(offset_day, offset_month, offset_year)
+pub trait DateOffset<T: DateOffsetable + PartialEq> {
+    fn add_offset(&self, dt: &T, num_offsets: u8) -> T;
+    fn subtract_offset(&self, dt: T, num_offsets: u8) -> T;
+    fn on_offset(&self, dt: T) -> bool {
+        self.subtract_offset(self.add_offset(&dt, 1), 1) == dt
+    }
 }
 
 #[cfg(test)]
@@ -44,27 +42,6 @@ mod tests {
     }
     struct SimpleOffset {}
 
-    impl DateOffset for SimpleOffset {
-        fn offset_date(&self, day: u16, month: u16, year: u16) -> (u16, u16, u16) {
-            (day + 1, month, year)
-        }
-    }
-
     #[test]
-    fn test_add_offset() {
-        let dt = SimpleDate {
-            day: 1,
-            month: 1,
-            year: 2001,
-        };
-        let res = add_offset(dt, SimpleOffset {});
-        assert_eq!(
-            res,
-            SimpleDate {
-                day: 2,
-                month: 1,
-                year: 2001
-            }
-        )
-    }
+    fn test_add_offset() {}
 }
